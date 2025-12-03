@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scope - 유학생 정보 공유 플랫폼</title>
+    <!-- Tailwind CSS (스타일링) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (아이콘) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (폰트) -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        scope: {
+                            start: '#FF4B2B', // 로고의 붉은 계열
+                            end: '#4A00E0',   // 로고의 보라/푸른 계열
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', '"Noto Sans JP"', '"Noto Sans SC"', 'sans-serif'],
+                        serif: ['"Merriweather"', 'serif'],
+                    },
+                    animation: {
+                        marquee: 'marquee 60s linear infinite', // 속도를 조금 더 여유롭게 조정
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-50%)' }, // 콘텐츠를 두 번 반복해서 -50%까지만 이동하면 무한 루프 완성
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 로고 그라데이션 텍스트 */
+        .text-gradient {
+            background: linear-gradient(135deg, #FF4B2B, #4A00E0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 버튼 그라데이션 */
+        .bg-gradient-scope {
+            background: linear-gradient(135deg, #FF4B2B, #4A00E0);
+        }
+        
+        /* 모바일 하단 네비게이션 숨김/보임 처리 */
+        .mobile-nav {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: flex;
+            }
+            .desktop-nav {
+                display: none;
+            }
+        }
+        
+        /* 스크롤바 숨기기 (깔끔한 UI용) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 탭 활성화 스타일 */
+        .tab-active {
+            border-bottom: 3px solid #4A00E0;
+            color: #4A00E0;
+            font-weight: 700;
+        }
+        .tab-inactive {
+            border-bottom: 3px solid transparent;
+            color: #9CA3AF;
+            font-weight: 500;
+        }
+        .tab-inactive:hover {
+            color: #4B5563;
+        }
+
+        /* [NEW] 무한 롤링 마스킹 효과 (양옆 페이드 아웃) */
+        .marquee-mask {
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans pb-24 md:pb-0">
+
+    <!-- ================= HEADER ================= -->
+    <header class="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            
+            <!-- Logo Area -->
+            <div class="flex items-center gap-2">
+                <!-- 로고 이미지 (직접 주소 입력) -->
+                <!-- [수정됨] 클릭 시 새로고침 기능 추가 (onclick="location.reload()") 및 커서 포인터 추가 -->
+                <img src="https://i.ibb.co/hPL3N0K/2025-12-03-172905.png" alt="Scope Logo" class="w-36 h-36 rounded-lg object-contain cursor-pointer" onclick="location.reload()">
+                <!-- <h1 class="font-serif text-2xl font-bold text-gradient cursor-pointer" onclick="location.reload()">Scope</h1> -->
+            </div>
+
+            <!-- Desktop Search & Menu -->
+            <div class="hidden md:flex flex-1 mx-10 max-w-lg">
+                <div class="relative w-full">
+                    <input type="text" data-t-placeholder="search_placeholder" placeholder="학교, 지역, 물품을 검색해보세요." class="w-full bg-gray-100 px-5 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm">
+                    <button class="absolute right-3 top-2.5 text-gray-400 hover:text-purple-600">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-4 text-gray-600 font-medium">
+                <!-- Language Selector (Desktop) -->
+                <div class="relative ml-2 mr-2">
+                    <select id="lang-select-desktop" onchange="changeLanguage(this.value)" class="bg-gray-100 text-gray-700 text-xs py-1 px-2 rounded-lg border-none focus:ring-0 cursor-pointer font-bold">
+                        <option value="ko">🇰🇷 한국어</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="ja">🇯🇵 日本語</option>
+                        <option value="zh">🇨🇳 中文</option>
+                        <option value="vi">🇻🇳 Tiếng Việt</option>
+                    </select>
+                </div>
+                <button class="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm" data-t="nav_login">로그인</button>
+            </div>
+
+            <!-- Mobile Action Icons -->
+            <div class="flex md:hidden gap-3 text-xl text-gray-700 items-center">
+                <select id="lang-select-mobile" onchange="changeLanguage(this.value)" class="bg-transparent text-sm border-none focus:ring-0 p-0 mr-1 text-gray-500 font-bold">
+                    <option value="ko">🇰🇷</option>
+                    <option value="en">🇺🇸</option>
+                    <option value="ja">🇯🇵</option>
+                    <option value="zh">🇨🇳</option>
+                    <option value="vi">🇻🇳</option>
+                </select>
+                <i class="fas fa-search cursor-pointer"></i>
+                <i class="far fa-bell cursor-pointer"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= HERO & AD SECTION ================= -->
+    <section class="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-6 md:py-12">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-0">
+            <div class="text-center md:text-left">
+                <h2 class="text-2xl md:text-3xl font-bold mb-2" data-t="hero_title">유학생을 위한 모든 것, Scope</h2>
+                <p class="text-sm md:text-base text-gray-300" data-t="hero_desc">내 학교 주변의 중고거래부터 룸메이트 구하기까지.</p>
+            </div>
+            
+            <!-- Ad Banner -->
+            <div class="w-full md:w-auto bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/20 transition cursor-pointer flex items-center justify-start gap-3 max-w-sm md:max-w-sm mx-auto md:mx-0">
+                <div class="w-12 h-12 bg-white rounded flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+                    <i class="fas fa-plane-departure text-xl"></i>
+                </div>
+                <div class="text-left">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">AD</span>
+                        <span class="font-bold text-sm text-white" data-t="ad_title">항공권 특가 이벤트!</span>
+                    </div>
+                    <div class="text-xs text-gray-300" data-t="ad_desc">유학생 인증 시 수하물 2개 무료 추가 ✈️</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= MARQUEE (INFINITE SCROLL) ================= -->
+    <!-- [수정됨] id 추가 및 내부 정적 컨텐츠 제거 (JS로 주입) -->
+    <div class="bg-indigo-50 border-b border-indigo-100 py-4 overflow-hidden relative flex marquee-mask">
+        <div id="marquee-content" class="whitespace-nowrap animate-marquee flex gap-10 text-indigo-900 font-bold text-sm md:text-base">
+            <!-- 자바스크립트가 여기에 텍스트를 자동으로 채웁니다 -->
+        </div>
+    </div>
+
+    <!-- ================= MAIN TAB SWITCHER ================= -->
+    <!-- 메인 기능 2개를 확실하게 구분 -->
+    <div class="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto flex">
+            <button id="tab-market" onclick="switchTab('market')" class="flex-1 py-4 text-center text-lg transition tab-active">
+                <i class="fas fa-store mr-2"></i> <span data-t="nav_market">중고장터</span>
+            </button>
+            <button id="tab-community" onclick="switchTab('community')" class="flex-1 py-4 text-center text-lg transition tab-inactive">
+                <i class="fas fa-comments mr-2"></i> <span data-t="nav_community">커뮤니티</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= CONTENT AREA ================= -->
+    <main class="max-w-6xl mx-auto px-4 mt-6 mb-24 min-h-[500px]">
+        
+        <!-- === VIEW 1: MARKETPLACE (중고장터) === -->
+        <div id="view-market" class="block animate-fade-in">
+            <!-- Market Filters -->
+            <div class="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-2">
+                <button class="flex-shrink-0 px-4 py-2 bg-gray-800 text-white rounded-full text-sm font-bold shadow-md">
+                    <i class="fas fa-bars mr-2"></i> <span data-t="cat_all">전체</span>
+                </button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-purple-500 hover:text-purple-500 transition">
+                    🏠 <span data-t="cat_room">룸메이트/양도</span>
+                </button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-purple-500 hover:text-purple-500 transition">
+                    📚 <span data-t="cat_book">전공서적</span>
+                </button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-purple-500 hover:text-purple-500 transition">
+                    📦 <span data-t="cat_moving">귀국이사 정리</span>
+                </button>
+            </div>
+
+            <!-- Market Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <!-- Item 1 -->
+                <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 flex md:flex-col">
+                    <div class="w-32 h-32 md:w-full md:h-48 bg-gray-200 flex-shrink-0 relative group">
+                        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Item" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition"></div>
+                    </div>
+                    <div class="p-4 flex flex-col justify-center w-full">
+                        <h3 class="text-base font-medium text-gray-900 line-clamp-2">맥북 에어 M1 스페이스그레이 (상태 S급)</h3>
+                        <div class="text-xs text-gray-500 mt-1">King's Cross · 2분 전</div>
+                        <div class="font-bold text-gray-900 mt-1">£600</div>
+                    </div>
+                </article>
+                <!-- Item 2 -->
+                <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 flex md:flex-col">
+                    <div class="w-32 h-32 md:w-full md:h-48 bg-gray-200 flex-shrink-0 relative">
+                        <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Item" class="w-full h-full object-cover">
+                        <span class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">런던 1존</span>
+                    </div>
+                    <div class="p-4 flex flex-col justify-center w-full">
+                        <h3 class="text-base font-medium text-gray-900 line-clamp-2">단기 룸메이트 구해요 (여성분만)</h3>
+                        <div class="text-xs text-gray-500 mt-1">Holborn · 10분 전</div>
+                        <div class="font-bold text-gray-900 mt-1">£800 <span class="text-xs font-normal text-gray-500">/월</span></div>
+                    </div>
+                </article>
+                <!-- Item 3 -->
+                <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 flex md:flex-col">
+                    <div class="w-32 h-32 md:w-full md:h-48 bg-gray-200 flex-shrink-0 relative">
+                        <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400"><i class="fas fa-book text-3xl"></i></div>
+                    </div>
+                    <div class="p-4 flex flex-col justify-center w-full">
+                        <h3 class="text-base font-medium text-gray-900 line-clamp-2">IELTS 캠브리지 14-18권 일괄</h3>
+                        <div class="text-xs text-gray-500 mt-1">UCL 근처 · 30분 전</div>
+                        <div class="font-bold text-gray-900 mt-1">£30</div>
+                    </div>
+                </article>
+                <!-- Item 4 -->
+                <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 flex md:flex-col">
+                    <div class="w-32 h-32 md:w-full md:h-48 bg-gray-200 flex-shrink-0 relative">
+                        <img src="https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Item" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-4 flex flex-col justify-center w-full">
+                        <h3 class="text-base font-medium text-gray-900 line-clamp-2">쿠쿠 3인용 밥솥 (전압 220v)</h3>
+                        <div class="text-xs text-gray-500 mt-1">Wimbledon · 3시간 전</div>
+                        <div class="font-bold text-gray-900 mt-1">£40</div>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <!-- === VIEW 2: COMMUNITY (커뮤니티) === -->
+        <div id="view-community" class="hidden animate-fade-in">
+            <!-- Community Filters (심플) -->
+            <div class="flex gap-2 mb-6 justify-center md:justify-start">
+                <button class="px-6 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold hover:bg-indigo-200 transition shadow-sm border border-indigo-200 flex items-center gap-2">
+                    <span class="bg-white rounded-full w-5 h-5 flex items-center justify-center text-xs">❓</span>
+                    <span data-t="btn_curious">궁금해요</span>
+                </button>
+                <button class="px-6 py-2 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold hover:bg-yellow-200 transition shadow-sm border border-yellow-200 flex items-center gap-2">
+                    <span class="bg-white rounded-full w-5 h-5 flex items-center justify-center text-xs">💡</span>
+                    <span data-t="btn_tell">알려줄게요</span>
+                </button>
+            </div>
+
+            <!-- Community List -->
+            <div class="flex flex-col gap-3">
+                
+                <!-- Post 1 -->
+                <article class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded mb-2">❓ 궁금해요</span>
+                            <h3 class="text-base md:text-lg font-bold text-gray-900 mb-1">영국 계좌 개설할 때 Monzo랑 Lloyds 중 뭐 추천하시나요?</h3>
+                            <p class="text-sm text-gray-500 line-clamp-2">유학생으로 처음 왔는데 학교 레터 받으려면 시간이 좀 걸려서요.. 카카오뱅크 해외송금 받을 때 수수료 적은 곳이 어딘지 궁금합니다.</p>
+                        </div>
+                        <div class="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 ml-4 hidden md:block">
+                             <!-- 썸네일 있을 경우 -->
+                             <div class="w-full h-full flex items-center justify-center text-gray-300"><i class="fas fa-image"></i></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                        <span>런던 생활 · 10분 전</span>
+                        <span class="flex items-center gap-1 text-indigo-500"><i class="far fa-comment-dots"></i> 8</span>
+                        <span class="flex items-center gap-1"><i class="far fa-eye"></i> 142</span>
+                    </div>
+                </article>
+
+                <!-- Post 2 -->
+                <article class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 bg-yellow-50 text-yellow-600 text-[10px] font-bold rounded mb-2">💡 알려줄게요</span>
+                            <h3 class="text-base md:text-lg font-bold text-gray-900 mb-1">이번주 주말까지 Tesco 삼겹살 할인하네요!</h3>
+                            <p class="text-sm text-gray-500 line-clamp-2">오늘 장보러 갔다가 발견했습니다. 3팩에 10파운드 행사 중이네요. 기숙사 사시는 분들 참고하세요~ 좌표는 1존 매장입니다.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                        <span>자취 요리 · 1시간 전</span>
+                        <span class="flex items-center gap-1 text-indigo-500"><i class="far fa-comment-dots"></i> 24</span>
+                        <span class="flex items-center gap-1"><i class="far fa-heart text-red-400"></i> 56</span>
+                    </div>
+                </article>
+
+                <!-- Post 3 -->
+                <article class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded mb-2">❓ 궁금해요</span>
+                            <h3 class="text-base md:text-lg font-bold text-gray-900 mb-1">비자 연장할 때 IHS 비용 결제 오류나는데..</h3>
+                            <p class="text-sm text-gray-500 line-clamp-2">한국 카드로 결제하려고 하는데 계속 튕기네요 ㅠㅠ 혹시 해결하신 분 계신가요?</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                        <span>비자 정보 · 2시간 전</span>
+                        <span class="flex items-center gap-1 text-indigo-500"><i class="far fa-comment-dots"></i> 3</span>
+                    </div>
+                </article>
+
+                 <!-- Post 4 -->
+                 <article class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 bg-yellow-50 text-yellow-600 text-[10px] font-bold rounded mb-2">💡 알려줄게요</span>
+                            <h3 class="text-base md:text-lg font-bold text-gray-900 mb-1">귀국 이사 저렴하게 보내는 법 정리 (배 vs 항공)</h3>
+                            <p class="text-sm text-gray-500 line-clamp-2">제가 이번에 귀국하면서 알아본 택배사별 가격표 공유합니다. 20kg 기준 드림백이 제일 저렴하긴 하네요.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                        <span>정보 공유 · 5시간 전</span>
+                        <span class="flex items-center gap-1 text-indigo-500"><i class="far fa-comment-dots"></i> 45</span>
+                        <span class="flex items-center gap-1"><i class="far fa-heart text-red-400"></i> 120</span>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= FOOTER (BUSINESS INFO) ================= -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-8 mb-16 md:mb-0">
+        <div class="max-w-6xl mx-auto px-4 text-xs text-gray-500">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h4 class="font-bold text-gray-700 text-sm mb-2">(주) Scope (스코프)</h4>
+                    <p class="leading-relaxed">
+                        <span data-t="footer_ceo">대표자: 홍길동</span> | <span data-t="footer_reg">사업자등록번호: 000-00-00000</span><br>
+                        <span data-t="footer_addr">주소: 서울특별시 강남구 테헤란로 123, 스타트업 빌딩 4층</span><br>
+                        <span data-t="footer_contact">고객센터: support@scope.com | 02-1234-5678</span>
+                    </p>
+                    <p class="mt-2 text-gray-400">Copyright © Scope. All rights reserved.</p>
+                </div>
+                <div class="flex gap-3 text-lg text-gray-400">
+                    <i class="fab fa-instagram hover:text-purple-600 cursor-pointer transition"></i>
+                    <i class="fab fa-facebook hover:text-blue-600 cursor-pointer transition"></i>
+                    <i class="fab fa-twitter hover:text-blue-400 cursor-pointer transition"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= FLOATING ACTION BUTTON (MOBILE) ================= -->
+    <button onclick="alert('글쓰기 기능은 아직 구현되지 않았습니다.')" class="fixed bottom-20 right-4 bg-gradient-scope text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl hover:scale-105 transition active:scale-95 z-40 md:hidden">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- ================= BOTTOM NAVIGATION (MOBILE ONLY) ================= -->
+    <nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 h-16 items-center justify-around z-50 text-xs text-gray-500 pb-1">
+        <a href="#" class="flex flex-col items-center gap-1 w-full h-full justify-center text-gray-900 font-bold" onclick="switchTab('market')">
+            <i class="fas fa-home text-xl"></i>
+            <span data-t="tab_home">홈</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 w-full h-full justify-center hover:text-purple-600 transition" onclick="switchTab('community')">
+            <i class="far fa-newspaper text-xl"></i>
+            <span data-t="tab_life">생활정보</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 w-full h-full justify-center hover:text-purple-600 transition">
+            <i class="fas fa-map-marker-alt text-xl"></i>
+            <span data-t="tab_near">내 근처</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 w-full h-full justify-center hover:text-purple-600 transition">
+            <i class="far fa-comment-dots text-xl"></i>
+            <span data-t="tab_chat">채팅</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 w-full h-full justify-center hover:text-purple-600 transition">
+            <i class="far fa-user text-xl"></i>
+            <span data-t="tab_my">나의 Scope</span>
+        </a>
+    </nav>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // === Language Logic ===
+        const translations = {
+            ko: {
+                search_placeholder: "학교, 지역, 물품을 검색해보세요.",
+                nav_community: "커뮤니티",
+                nav_market: "중고장터",
+                nav_login: "로그인",
+                hero_title: "유학생을 위한 모든 것, Scope",
+                hero_desc: "내 학교 주변의 중고거래부터 룸메이트 구하기까지.",
+                ad_title: "항공권 특가 이벤트!",
+                ad_desc: "유학생 인증 시 수하물 2개 무료 추가 ✈️",
+                cat_all: "전체",
+                cat_room: "룸메이트/양도",
+                cat_book: "전공서적",
+                cat_moving: "귀국이사 정리",
+                cat_food: "한식 공동구매",
+                tab_home: "홈",
+                tab_life: "생활정보",
+                tab_near: "내 근처",
+                tab_chat: "채팅",
+                tab_my: "나의 Scope",
+                btn_curious: "궁금해요",
+                btn_tell: "알려줄게요",
+                // Footer
+                footer_ceo: "대표자: 홍길동",
+                footer_reg: "사업자등록번호: 000-00-00000",
+                footer_addr: "주소: 서울특별시 강남구 테헤란로 123, 스타트업 빌딩 4층",
+                footer_contact: "고객센터: support@scope.com | 02-1234-5678",
+                // [NEW] 롤링 텍스트 키워드 리스트
+                marquee_list: ["🏠 부동산", "🛒 생활용품", "🎬 여가", "ℹ️ 정보", "✈️ 여행", "🍔 맛집", "💼 취업", "🛂 비자", "🏫 학교생활", "🛌 룸메이트", "📚 전공서적", "🍯 꿀팁", "💱 환율", "🇰🇷 한인모임", "📦 귀국이사"]
+            },
+            en: {
+                search_placeholder: "Search schools, regions, or items...",
+                nav_community: "Community",
+                nav_market: "Marketplace",
+                nav_login: "Login",
+                hero_title: "Everything for Int'l Students, Scope",
+                hero_desc: "From secondhand trading to finding roommates near campus.",
+                ad_title: "Flight Special Offer!",
+                ad_desc: "Free 2 Extra Bags for Students ✈️",
+                cat_all: "All",
+                cat_room: "Room/Rent",
+                cat_book: "Textbooks",
+                cat_moving: "Moving Sale",
+                cat_food: "K-Food Group Buy",
+                tab_home: "Home",
+                tab_life: "Life Info",
+                tab_near: "Nearby",
+                tab_chat: "Chat",
+                tab_my: "My Scope",
+                btn_curious: "Curious",
+                btn_tell: "Tips",
+                // Footer
+                footer_ceo: "CEO: Gil-dong Hong",
+                footer_reg: "Business Reg. No: 000-00-00000",
+                footer_addr: "Address: 4F Startup Bldg, 123 Teheran-ro, Gangnam-gu, Seoul",
+                footer_contact: "Contact: support@scope.com | +82-2-1234-5678",
+                marquee_list: ["🏠 Housing", "🛒 Essentials", "🎬 Leisure", "ℹ️ Info", "✈️ Travel", "🍔 Food", "💼 Jobs", "🛂 Visa", "🏫 Campus Life", "🛌 Roommate", "📚 Textbooks", "🍯 Tips", "💱 Exchange", "🇰🇷 K-Community", "📦 Moving"]
+            },
+            ja: {
+                search_placeholder: "学校、地域、商品を検索...",
+                nav_community: "コミュニティ",
+                nav_market: "フリマ",
+                nav_login: "ログイン",
+                hero_title: "留学生のためのすべて、Scope",
+                hero_desc: "キャンパス周辺のフリマからルームシェア探しまで。",
+                ad_title: "航空券特別キャンペーン！",
+                ad_desc: "留学生認証で手荷物2個無料追加 ✈️",
+                cat_all: "全て",
+                cat_room: "ルームシェア",
+                cat_book: "教科書",
+                cat_moving: "引越し整理",
+                cat_food: "韓国料理共同購入",
+                tab_home: "ホーム",
+                tab_life: "生活情報",
+                tab_near: "付近",
+                tab_chat: "チャット",
+                tab_my: "マイページ",
+                btn_curious: "質問",
+                btn_tell: "情報",
+                // Footer
+                footer_ceo: "代表者: ホン・ギルドン",
+                footer_reg: "事業者登録番号: 000-00-00000",
+                footer_addr: "住所: ソウル特別市江南区テヘラン路123、スタートアップビル4階",
+                footer_contact: "お問合せ: support@scope.com | 02-1234-5678",
+                marquee_list: ["🏠 不動産", "🛒 生活用品", "🎬 レジャー", "ℹ️ 情報", "✈️ 旅行", "🍔 グルメ", "💼 就職", "🛂 ビザ", "🏫 学校生活", "🛌 ルームシェア", "📚 専門書", "🍯 ヒント", "💱 為替", "🇰🇷 韓国人会", "📦 帰国引越"]
+            },
+            zh: {
+                search_placeholder: "搜索学校、地区或物品...",
+                nav_community: "社区",
+                nav_market: "二手市场",
+                nav_login: "登录",
+                hero_title: "留学生的一站式平台, Scope",
+                hero_desc: "从校园周边的二手交易到寻找室友。",
+                ad_title: "机票特价活动！",
+                ad_desc: "留学生认证即可免费增加2件行李 ✈️",
+                cat_all: "全部",
+                cat_room: "租房/室友",
+                cat_book: "教科书",
+                cat_moving: "回国甩卖",
+                cat_food: "韩餐团购",
+                tab_home: "首页",
+                tab_life: "生活信息",
+                tab_near: "附近",
+                tab_chat: "聊天",
+                tab_my: "我的 Scope",
+                btn_curious: "提问",
+                btn_tell: "分享",
+                // Footer
+                footer_ceo: "代表: 洪吉童",
+                footer_reg: "商业登记号: 000-00-00000",
+                footer_addr: "地址: 首尔特别市江南区德黑兰路123, 创业大厦4楼",
+                footer_contact: "客户服务: support@scope.com | 02-1234-5678",
+                marquee_list: ["🏠 房地产", "🛒 生活用品", "🎬 休闲", "ℹ️ 信息", "✈️ 旅游", "🍔 美食", "💼 就业", "🛂 签证", "🏫 校园生活", "🛌 室友", "📚 教科书", "🍯 小贴士", "💱 汇率", "🇰🇷 聚会", "📦 回国搬家"]
+            },
+            vi: {
+                search_placeholder: "Tìm kiếm trường học, khu vực, đồ dùng...",
+                nav_community: "Cộng đồng",
+                nav_market: "Chợ đồ cũ",
+                nav_login: "Đăng nhập",
+                hero_title: "Tất cả cho du học sinh, Scope",
+                hero_desc: "Từ mua bán đồ cũ đến tìm bạn cùng phòng gần trường.",
+                ad_title: "Khuyến mãi vé máy bay!",
+                ad_desc: "Miễn phí thêm 2 kiện hành lý cho du học sinh ✈️",
+                cat_all: "Tất cả",
+                cat_room: "Phòng trọ",
+                cat_book: "Sách giáo khoa",
+                cat_moving: "Chuyển nhà",
+                cat_food: "Mua chung đồ Hàn",
+                tab_home: "Trang chủ",
+                tab_life: "Đời sống",
+                tab_near: "Gần đây",
+                tab_chat: "Chat",
+                tab_my: "Của tôi",
+                btn_curious: "Hỏi",
+                btn_tell: "Mách",
+                // Footer
+                footer_ceo: "Đại diện: Hong Gil-dong",
+                footer_reg: "Số ĐKKD: 000-00-00000",
+                footer_addr: "Địa chỉ: 4F Startup Bldg, 123 Teheran-ro, Seoul",
+                footer_contact: "Liên hệ: support@scope.com | 02-1234-5678",
+                marquee_list: ["🏠 Bất động sản", "🛒 Đồ dùng", "🎬 Giải trí", "ℹ️ Thông tin", "✈️ Du lịch", "🍔 Ẩm thực", "💼 Việc làm", "🛂 Visa", "🏫 Đời sống", "🛌 Bạn cùng phòng", "📚 Sách", "🍯 Mẹo vặt", "💱 Tỷ giá", "🇰🇷 Hội Hàn Quốc", "📦 Chuyển nhà"]
+            }
+        };
+
+        function changeLanguage(lang) {
+            document.getElementById('lang-select-desktop').value = lang;
+            document.getElementById('lang-select-mobile').value = lang;
+
+            const t = translations[lang];
+            if (!t) return;
+
+            // 일반 텍스트 업데이트
+            document.querySelectorAll('[data-t]').forEach(el => {
+                const key = el.getAttribute('data-t');
+                if (t[key]) {
+                    el.innerText = t[key];
+                }
+            });
+
+            // 플레이스홀더 업데이트
+            document.querySelectorAll('[data-t-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-t-placeholder');
+                if (t[key]) {
+                    el.placeholder = t[key];
+                }
+            });
+
+            // [NEW] 마키(롤링 텍스트) 업데이트 호출
+            updateMarquee(lang);
+        }
+
+        // [NEW] 롤링 텍스트 자동 생성 함수
+        function updateMarquee(lang) {
+            const list = translations[lang].marquee_list;
+            const container = document.getElementById('marquee-content');
+            
+            if (!list || !container) return;
+
+            // 1. 기존 내용 지우기
+            container.innerHTML = '';
+
+            // 2. 리스트를 HTML 문자열로 변환하는 헬퍼 함수
+            const createContent = () => {
+                 return list.map(item => `<span>${item}</span>`).join('');
+            };
+
+            // 3. 무한 루프를 위해 동일한 내용을 2번 주입 (CSS translateX(-50%)와 연동)
+            container.innerHTML = createContent() + createContent();
+        }
+
+        // [수정됨] window.onload 제거 및 함수 즉시 실행으로 변경
+        updateMarquee('ko');
+        
+        // === Tab Switching Logic ===
+        function switchTab(tabName) {
+            const marketView = document.getElementById('view-market');
+            const communityView = document.getElementById('view-community');
+            const tabMarket = document.getElementById('tab-market');
+            const tabCommunity = document.getElementById('tab-community');
+
+            if (tabName === 'market') {
+                marketView.classList.remove('hidden');
+                communityView.classList.add('hidden');
+                
+                // Style Active Tab
+                tabMarket.classList.add('tab-active');
+                tabMarket.classList.remove('tab-inactive');
+                tabCommunity.classList.add('tab-inactive');
+                tabCommunity.classList.remove('tab-active');
+            } else {
+                marketView.classList.add('hidden');
+                communityView.classList.remove('hidden');
+
+                // Style Active Tab
+                tabCommunity.classList.add('tab-active');
+                tabCommunity.classList.remove('tab-inactive');
+                tabMarket.classList.add('tab-inactive');
+                tabMarket.classList.remove('tab-active');
+            }
+        }
+    </script>
+</body>
+</html>
