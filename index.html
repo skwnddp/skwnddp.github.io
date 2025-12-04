@@ -26,12 +26,12 @@
                         serif: ['"Merriweather"', 'serif'],
                     },
                     animation: {
-                        marquee: 'marquee 30s linear infinite', // 속도를 조금 더 여유롭게 조정
+                        marquee: 'marquee 30s linear infinite',
                     },
                     keyframes: {
                         marquee: {
                             '0%': { transform: 'translateX(0%)' },
-                            '100%': { transform: 'translateX(-50%)' }, // 콘텐츠를 두 번 반복해서 -50%까지만 이동하면 무한 루프 완성
+                            '100%': { transform: 'translateX(-50%)' },
                         }
                     }
                 }
@@ -87,14 +87,146 @@
             color: #4B5563;
         }
 
-        /* [NEW] 무한 롤링 마스킹 효과 (양옆 페이드 아웃) */
+        /* 무한 롤링 마스킹 효과 (양옆 페이드 아웃) */
         .marquee-mask {
             mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
+        
+        /* ================================================================
+           [FIXED] 애니메이션 키프레임을 Tailwind Config에서 CSS로 이동
+           ================================================================
+        */
+
+        /* 뫼비우스 궤적 애니메이션 정의 */
+        @keyframes mobius-path {
+            0% {
+                transform: rotate(0deg);
+                border-top-color: rgba(255, 75, 43, 0.8);
+                border-right-color: rgba(255, 75, 43, 0.1);
+                border-bottom-color: rgba(74, 0, 224, 0.1);
+                border-left-color: rgba(74, 0, 224, 0.8);
+            }
+            50% {
+                transform: rotate(180deg);
+                border-top-color: rgba(74, 0, 224, 0.8);
+                border-right-color: rgba(255, 75, 43, 0.8);
+                border-bottom-color: rgba(255, 75, 43, 0.1);
+                border-left-color: rgba(74, 0, 224, 0.1);
+            }
+            100% {
+                transform: rotate(360deg);
+                border-top-color: rgba(255, 75, 43, 0.8);
+                border-right-color: rgba(255, 75, 43, 0.1);
+                border-bottom-color: rgba(74, 0, 224, 0.1);
+                border-left-color: rgba(74, 0, 224, 0.8);
+            }
+        }
+
+        /* 로딩 페이드 아웃 애니메이션 정의 */
+        @keyframes loader-fade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+
+        /* 로딩 오버레이 스타일 */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* 여기서 loader-fade 키프레임을 참조합니다 */
+            animation: loader-fade 0.3s forwards ease-out; 
+            animation-delay: 1.0s;
+        }
+        
+        /* 로딩 애니메이션 컨테이너 */
+        .scope-logo-loader {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-origin: center center;
+            overflow: hidden;
+            transform: rotate(45deg); 
+        }
+        
+        /* 로고 이미지 */
+        .scope-logo-loader img {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            margin: auto;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: rotate(-45deg); 
+        }
+
+        /* 뫼비우스 루프 궤적 - 좌측 아래 원 */
+        .mobius-ring-left {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            top: 50%;
+            left: 50%;
+            margin-top: -60px; 
+            margin-left: -40px;
+            transform: translate(-30%, -30%); 
+            border: 4px solid transparent;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 75, 43, 0.8);
+            
+            /* CSS에서 직접 정의한 keyframes 호출 */
+            animation: mobius-path 0.8s infinite linear;
+        }
+
+        /* 뫼비우스 루프 궤적 - 우측 위 원 */
+        .mobius-ring-right {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            top: 50%;
+            left: 50%;
+            margin-top: -60px; 
+            margin-left: -40px;
+            transform: translate(30%, 30%); 
+            border: 4px solid transparent;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(74, 0, 224, 0.8);
+            
+            /* CSS에서 직접 정의한 keyframes 호출 (역방향) */
+            animation: mobius-path 0.8s infinite linear reverse;
+        }
+
+        /* 페이드인 애니메이션 */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans pb-24 md:pb-0">
+
+    <!-- ================= [NEW] 로딩 오버레이 ================= -->
+    <div id="loading-overlay" role="status" aria-label="Loading Scope Platform">
+        <div class="scope-logo-loader">
+            <!-- 로고 이미지 -->
+            <img src="https://i.ibb.co/jPFbg7MF/width-550.png" alt="Scope Logo">
+            <!-- 애니메이션 링 2개 -->
+            <div class="mobius-ring-left"></div>
+            <div class="mobius-ring-right"></div>
+        </div>
+    </div>
+    <!-- ================= 로딩 오버레이 끝 ================= -->
 
     <!-- ================= HEADER ================= -->
     <header class="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -102,9 +234,7 @@
             
             <!-- Logo Area -->
             <div class="flex items-center gap-2">
-                <!-- 로고 이미지 (직접 주소 입력) -->
                 <img src="https://i.ibb.co/hPL3N0K/2025-12-03-172905.png" alt="Scope Logo" class="w-36 h-36 rounded-lg object-contain cursor-pointer" onclick="location.reload()">
-                <!-- <h1 class="font-serif text-2xl font-bold text-gradient cursor-pointer" onclick="location.reload()">Scope</h1> -->
             </div>
 
             <!-- Desktop Search & Menu -->
@@ -133,7 +263,6 @@
 
             <!-- Mobile Action Icons -->
             <div class="flex md:hidden gap-3 text-xl text-gray-700 items-center">
-                <!-- [수정됨] 모바일 언어 선택창에 텍스트 추가 -->
                 <select id="lang-select-mobile" onchange="changeLanguage(this.value)" class="bg-transparent text-sm border-none focus:ring-0 p-0 mr-1 text-gray-500 font-bold">
                     <option value="ko">🇰🇷 한국어</option>
                     <option value="en">🇺🇸 English</option>
@@ -172,7 +301,6 @@
     </section>
 
     <!-- ================= MARQUEE (INFINITE SCROLL) ================= -->
-    <!-- [수정됨] id 추가 및 내부 정적 컨텐츠 제거 (JS로 주입) -->
     <div class="bg-indigo-50 border-b border-indigo-100 py-4 overflow-hidden relative flex marquee-mask">
         <div id="marquee-content" class="whitespace-nowrap animate-marquee flex gap-10 text-indigo-900 font-bold text-sm md:text-base">
             <!-- 자바스크립트가 여기에 텍스트를 자동으로 채웁니다 -->
@@ -180,7 +308,6 @@
     </div>
 
     <!-- ================= MAIN TAB SWITCHER ================= -->
-    <!-- 메인 기능 2개를 확실하게 구분 -->
     <div class="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-6xl mx-auto flex">
             <button id="tab-market" onclick="switchTab('market')" class="flex-1 py-4 text-center text-lg transition tab-active">
@@ -597,8 +724,25 @@
             container.innerHTML = createContent() + createContent();
         }
 
-        // [수정됨] window.onload 제거 및 함수 즉시 실행으로 변경
+        // 초기 로드 시 실행 (렉 방지를 위해 즉시 실행)
         updateMarquee('ko');
+
+        // [NEW] 로딩 애니메이션 및 오버레이 제거
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('loading-overlay');
+            
+            // 0.8초 애니메이션 실행 (총 1초)
+            setTimeout(() => {
+                // 오버레이에 사라지는 애니메이션 클래스 추가
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.3s ease-out';
+                
+                // 투명화가 완료될 때까지 기다린 후 완전히 제거 (CSS transition 0.3s)
+                setTimeout(() => {
+                    overlay.remove();
+                }, 200); 
+            }, 300); 
+        });
         
         // === Tab Switching Logic ===
         function switchTab(tabName) {
@@ -630,4 +774,3 @@
     </script>
 </body>
 </html>
-
