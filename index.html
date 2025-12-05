@@ -880,7 +880,8 @@
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             const stepId = entry.target.id; // 예: step-1
-                            const stepNum = parseInt(stepId.split('-')[1]);
+                            // [수정] 숫자를 못 읽으면(NaN) 무조건 1로 처리 (|| 1 추가)
+                            const stepNum = parseInt(stepId.split('-')[1]) || 1;
                             
                             // 데이터 속성 가져오기
                             const title = entry.target.getAttribute('data-title');
@@ -919,6 +920,7 @@
     </script>
 </body>
 </html>
+
 
 
 
