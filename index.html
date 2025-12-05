@@ -329,7 +329,7 @@
                 <div class="max-w-xl mx-auto px-6">
                     <div class="flex justify-between items-end mb-2">
                         <span id="current-step-text" class="text-sm font-extrabold text-indigo-600 transition-colors duration-300">STEP 1. 입국 준비</span>
-                        <span id="current-step-percent" class="text-[10px] text-gray-400 font-mono">20%</span>
+                        <span id="current-step-percent" class="text-[10px] text-gray-400 font-mono">1/5</span>
                     </div>
                     <div class="flex gap-1 h-1.5 w-full">
                         <div id="bar-1" class="h-full w-full rounded-full bg-indigo-600 transition-all duration-500 opacity-100"></div>
@@ -894,7 +894,7 @@
                             titleEl.className = `text-sm font-extrabold transition-colors duration-300 ${textColor}`;
 
                             // 2. 퍼센트 텍스트 업데이트
-                            document.getElementById('current-step-percent').innerText = (stepNum * 20) + '%';
+                            document.getElementById('current-step-percent').innerText = stepNum + '/5';
 
                             // 3. 프로그레스 바 게이지 채우기 로직
                             for (let i = 1; i <= 5; i++) {
@@ -919,6 +919,7 @@
     </script>
 </body>
 </html>
+
 
 
 
